@@ -7,7 +7,7 @@ struct Bandit {
     arms: Vec<BigDecimal>,
     rewards: HashMap<BigDecimal,(BigDecimal, BigDecimal)>,
     mean_gain: HashMap<BigDecimal, BigDecimal>,
-    inventory: HashMap<String, BigDecimal>,
+    inventory: HashMap<Token, BigDecimal>,
 }
 
 impl Bandit {
@@ -17,7 +17,7 @@ impl Bandit {
         let mut mean_gain = HashMap::new();
         let mut inventory = HashMap::new();
         // Create initial state
-        inventory.insert(String::from(Token::USDC), BigDecimal::from(1000));
+        inventory.insert(Token::USDC::new(), BigDecimal::from(1000));
         let arms = create_bandit_arms();
         for arm in arms.iter() {
             mean_gain.insert(arm.clone(), BigDecimal::zero());
