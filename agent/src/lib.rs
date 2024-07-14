@@ -1,7 +1,6 @@
 use bigdecimal::{BigDecimal, ToPrimitive, Zero, num_bigint::Sign};
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul};
 use std::str::FromStr;
-use rand_distr::{Distribution};
 
 use near_sdk::*;
 use near_sdk::json_types::U128;
@@ -87,7 +86,7 @@ impl Contract {
         );
     }
 
-    pub fn trade(&mut self, amount: BigDecimal) -> Promise {
+    pub fn trade(&mut self) -> Promise {
         let dex = dex::ref_fi::ext(self.dex_id.clone());
 
         let gain = self.get_gain_potential();
@@ -99,13 +98,15 @@ impl Contract {
         let amount_in = inventory.mul(BigDecimal::from(self.trade_size));
         let amount_in = amount_in.to_u128().unwrap();
 
-        let swap_actions = vec![SwapAction{
-            pool_id: NEAR_USDT_POOL_ID,
-            token_in: AccountId::from_str(&Token::near().address).unwrap(),
-            amount_in: Some(U128(amount_in * 10u128.pow(24))),
-            token_out: AccountId::from_str(&Token::usdt().address).unwrap(),
-            min_amount_out: U128(0),
-        }, SwapAction{
+        let swap_actions = vec![
+            SwapAction{
+                pool_id: NEAR_USDT_POOL_ID,
+                token_in: AccountId::from_str(&Token::near().address).unwrap(),
+                amount_in: Some(U128(amount_in * 10u128.pow(24))),
+                token_out: AccountId::from_str(&Token::usdt().address).unwrap(),
+                min_amount_out: U128(0),
+            },
+          SwapAction{
             pool_id: USDT_USDC_USDTe_USDC_POOL_ID,
             token_in: AccountId::from_str(&Token::usdt().address).unwrap(),
             amount_in: None,
