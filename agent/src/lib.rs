@@ -1,7 +1,7 @@
 use bigdecimal::{BigDecimal, ToPrimitive, Zero, num_bigint::Sign};
 use std::ops::{Add, Mul, Sub};
 use std::str::FromStr;
-use rand_distr::{Distribution, Pareto};
+use rand_distr::{Distribution};
 
 use near_sdk::*;
 use near_sdk::json_types::U128;
@@ -70,9 +70,9 @@ impl Contract {
         let dex = dex::ref_fi::ext(self.dex_id.clone());
         let promise = dex.swap(vec![SwapAction {
             pool_id: NEAR_USDT_POOL_ID,
-            token_in: AccountId::from_str(NEAR_TOKEN_ID).unwrap(),
+            token_in: AccountId::from_str(Token::near().address).unwrap(),
             amount_in: Some(U128(10u128.pow(24))),
-            token_out: AccountId::from_str(USDT_TOKEN_ID).unwrap(),
+            token_out: AccountId::from_str(Token::usdt().address).unwrap(),
             min_amount_out: U128(5 * 10u128.pow(6)),
         }], None);
 
@@ -81,7 +81,52 @@ impl Contract {
             Self::ext(env::current_account_id())
                 .with_static_gas(Gas::from_tgas(5))
                 .query_greeting_callback(
-                    // AccountId::from_str(NEAR_TOKEN_ID).unwrap(),
+                    // AccountId::from_str(Token::near().address).unwrap(),
+                    // Some(U128(10u128.pow(24))),
+                ),
+        );
+    }
+
+    pub fn trade(&mut self, amount: BigDecimal) -> Promise {
+        let dex = dex::ref_fi::ext(self.dex_id.clone());
+
+        let gain = self.get_gain_potential();
+        let gain = gain.unwrap();
+
+        let inventory = self.inventory.get(&Token::near()).unwrap();
+        let inventory = BigDecimal::from(inventory);
+
+        let amount_in = inventory.mul(BigDecimal::from(self.trade_size));
+        let amount_in = amount_in.to_u128().unwrap();
+
+        let swap_actions = vec![SwapAction{
+            pool_id: NEAR_USDT_POOL_ID,
+            token_in: AccountId::from_str(&Token::near().address).unwrap(),
+            amount_in: Some(U128(amount_in * 10u128.pow(24))),
+            token_out: AccountId::from_str(&Token::usdt().address).unwrap(),
+            min_amount_out: U128(0),
+        }, SwapAction{
+            pool_id: USDT_USDC_USDTe_USDC_POOL_ID,
+            token_in: AccountId::from_str(&Token::usdt().address).unwrap(),
+            amount_in: None,
+            token_out: AccountId::from_str(&Token::usdc().address).unwrap(),
+            min_amount_out: U128(0),
+        }, SwapAction{
+            pool_id: NEAR_USDC_POOL_ID,
+            token_in: AccountId::from_str(&Token::usdc().address).unwrap(),
+            amount_in: None,
+            token_out: AccountId::from_str(&Token::near().address).unwrap(),
+            min_amount_out: U128(0),
+        }];
+
+        let promise = dex.swap(swap_actions, None);
+
+        return promise.then(
+            // Create a promise to callback query_greeting_callback
+            Self::ext(env::current_account_id())
+                .with_static_gas(Gas::from_tgas(5))
+                .query_greeting_callback(
+                    // AccountId::from_str(Token::near().address).unwrap(),
                     // Some(U128(10u128.pow(24))),
                 ),
         );
@@ -130,23 +175,97 @@ impl Contract {
     }
 
     fn get_arm(&mut self, gain: BigDecimal) -> BigDecimal {
-        let arms = self.arms.iter().map(|arm| BigDecimal::from(arm.to_owned())).collect::<Vec<BigDecimal>>();
+        let arms = self.arms.iter().map(|arm| BigDecimal::from(arm.to_owned()))
+            .collect::<Vec<BigDecimal>>();
         let last = arms.last().unwrap();
         let found = arms.iter().find(|x| **x >= gain);
         found.unwrap_or(last).to_owned()
     }
 
-    fn trade(&self, amount: BigDecimal, expected_gain: BigDecimal) -> BigDecimal {
-        // Placeholder for trading logic
-        let scale = 1.0; // 'xm' parameter in the Pareto distribution
-        let shape = 1.5; // 'alpha' parameter in the Pareto distribution
-        // Create a Pareto distribution with the given scale and shape parameters
-        let pareto = Pareto::new(scale, shape).unwrap();
+    fn get_gain_potential(&self) -> Option<BigDecimal>{
+        let dex = dex::ref_fi::ext(self.dex_id.clone());
 
-        // Create a random number generator
-        let mut rng = rand::thread_rng();
-        let gas = BigDecimal::from_str(& pareto.sample(&mut rng).to_string()).unwrap();
-        amount.mul(expected_gain).sub(gas)
+        // NEAR-USDT
+        let amount_in_near_usdt = Some(U128(10u128.pow(24)));
+        let promise_near_usdt = dex.get_return(
+            NEAR_USDT_POOL_ID,
+            AccountId::from_str(Token::near().address).unwrap(),
+            amount_in_near_usdt,
+            AccountId::from_str(Token.usdt().address).unwrap()
+        );
+
+        let amount_out_near_usdt = promise_near_usdt.then(
+            // Create a promise to callback query_greeting_callback
+            Self::ext(env::current_account_id())
+                .with_static_gas(Gas::from_tgas(5))
+                .query_greeting_callback(
+                    //TODO ??
+                    // AccountId::from_str(Token::near().address).unwrap(),
+                    // Some(U128(10u128.pow(24))),
+                ),
+        );
+        // USDT-USDC
+        let amount_in_usdt_usdc = Some(U128(10u128.pow(6)));
+        let promise_usdt_usdc = dex.get_return(
+            USDT_USDC_USDTe_USDC_POOL_ID,
+            AccountId::from_str(Token::usdt().address).unwrap(),
+            amount_in_usdt_usdc,
+            AccountId::from_str(Token::usdc().address).unwrap()
+        );
+        let amount_out_usdt_usdc = promise_usdt_usdc.then(
+            // Create a promise to callback query_greeting_callback
+            Self::ext(env::current_account_id())
+                .with_static_gas(Gas::from_tgas(5))
+                .query_greeting_callback(
+                    //TODO ??
+                    // AccountId::from_str(Token::near().address).unwrap(),
+                    // Some(U128(10u128.pow(24))),
+                ),
+        );
+
+        // USDC-NEAR
+        let amount_in_usdc_near = Some(U128(10u128.pow(6)));
+        let promise_usdc_near = dex.get_return(
+            NEAR_USDC_POOL_ID,
+            AccountId::from_str(Token::usdc().address).unwrap(),
+            amount_in_usdc_near,
+            AccountId::from_str(Token::near().address).unwrap()
+        );
+
+        let amount_out_usdc_near = promise_usdc_near.then(
+            // Create a promise to callback query_greeting_callback
+            Self::ext(env::current_account_id())
+                .with_static_gas(Gas::from_tgas(5))
+                .query_greeting_callback(
+                    //TODO ??
+                    // AccountId::from_str(Token::near().address).unwrap(),
+                    // Some(U128(10u128.pow(24))),
+                ),
+        );
+        // NEAR-USDT
+        let out1 = BigDecimal::from_str(&amount_out_near_usdt.to_string().unwrap()) /
+            BigDecimal::from_str(&10u128.pow(6).to_string().unwrap());
+        let in1 = BigDecimal::from_str(&amount_in_near_usdt.to_string().unwrap());
+        let rate1 = out1.div(in1);
+        // USDT-USDC
+        let out2 = BigDecimal::from_str(&amount_out_usdt_usdc.to_string().unwrap()) /
+            BigDecimal::from_str(&10u128.pow(6).to_string().unwrap());
+        let in2 = BigDecimal::from_str(&amount_in_usdt_usdc.to_string().unwrap());
+        let rate2 = out2.div(in2);
+        // USDC-NEAR
+        let out3 = BigDecimal::from_str(&amount_out_usdc_near.to_string().unwrap()) /
+            BigDecimal::from_str(&10u128.pow(24).to_string().unwrap());
+        let in3 = BigDecimal::from_str(&amount_in_usdc_near.to_string().unwrap());
+        let rate3 = out3.div(in3);
+
+        let gain_multiplier = rate1.mul(rate2).mul(rate3);
+        if gain_multiplier > BigDecimal::from(1) {
+            return gain_multiplier.sub(BigDecimal::from(1))
+        }
+        else {
+            return None
+        }
+
     }
 
 

@@ -8,10 +8,6 @@ pub const NEAR_USDT_POOL_ID: u64 = 3879;
 #[allow(dead_code)]
 pub const NEAR_USDC_POOL_ID: u64 = 4512;
 
-pub const NEAR_TOKEN_ID: &str = "near";
-pub const USDT_TOKEN_ID: &str = "usdt.tether-token.near";
-#[allow(dead_code)]
-pub const USDC_TOKEN_ID: &str = "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1";
 
 #[ext_contract]
 #[allow(dead_code)]
