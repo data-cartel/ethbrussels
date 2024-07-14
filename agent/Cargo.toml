@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 near-contract-standards = "5.2.1"
 near-sdk = "5.1.0"
-bigdecimal = "0.4.5"
+bigdecimal = { version = "0.4.5", features = ["serde-json"] }
 plotters = "0.3.6"
 getrandom = { version = "0.2.15", features = ["js"] }
 rand = "0.8.5"
