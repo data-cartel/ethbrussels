@@ -1,0 +1,11 @@
+[package]
+name = "oracle"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+near-jsonrpc-client = "0.10.1"
+near-primitives = "0.23.0"
+tokio = { version = "1.38.0", features = ["full"] }
+websocket = "0.27.1"
