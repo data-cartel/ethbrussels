@@ -21,14 +21,14 @@ pub trait RefFi {
     /// If no attached deposit, outgoing tokens used in swaps must be whitelisted.
     fn swap(&mut self, actions: Vec<SwapAction>, referral_id: Option<AccountId>) -> U128;
 
-    /// Executes generic set of actions.
-    /// If referrer provided, pays referral_fee to it.
-    /// If no attached deposit, outgoing tokens used in swaps must be whitelisted.
-    fn execute_actions(
-        &mut self,
-        actions: Vec<Action>,
-        referral_id: Option<AccountId>,
-    ) -> ActionResult;
+    /// Given specific pool, returns amount of token_out recevied swapping amount_in of token_in.
+    fn get_return(
+        &self,
+        pool_id: u64,
+        token_in: AccountId,
+        amount_in: U128,
+        token_out: AccountId,
+    ) -> U128;
 }
 
 /// Single swap action.

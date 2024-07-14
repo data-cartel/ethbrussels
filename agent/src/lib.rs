@@ -70,11 +70,7 @@ impl Contract {
         }
     }
 
-    // Public method - accepts a greeting, such as "howdy", and records it
     pub fn step(&mut self) -> Promise {
-        let greeting = "placeholder".to_string(); //
-        log!("Saving greeting: {greeting}");
-
         let dex = dex::ref_fi::ext(self.dex_id.clone());
         let promise = dex.swap(vec![SwapAction {
             pool_id: NEAR_USDT_POOL_ID,
