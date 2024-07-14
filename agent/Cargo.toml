@@ -3,10 +3,9 @@ name = "nearb-agent"
 description = "cargo-near-new-project-description"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/data-cartel/ethbrussels"
 # TODO: Fill out the repository field to help NEAR ecosystem tools to discover your project.
 # NEP-0330 is automatically implemented for all contracts built with https://github.com/near/cargo-near.
-# Link to the repository will be available via `contract_source_metadata` view-function.
-#repository = "https://github.com/xxx/xxx"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -17,6 +16,7 @@ near-contract-standards = "5.2.1"
 near-sdk = "5.1.0"
 bigdecimal = "0.4.5"
 plotters = "0.3.6"
+getrandom = { version = "0.2.15", features = ["js"] }
 rand = "0.8.5"
 rand_distr = "0.4.3"
 statrs = "0.15.0"

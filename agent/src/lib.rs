@@ -1,7 +1,10 @@
 use std::str::FromStr;
 use near_sdk::{env, json_types::U128, log, near, AccountId, Gas, Promise};
 
+mod bandit;
+mod token;
 mod dex;
+
 use dex::*;
 
 // Define the contract structure
