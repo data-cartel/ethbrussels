@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["agent", "oracle"]
+members = ["agent", "invoker"]
 
 [profile.release]
 codegen-units = 1

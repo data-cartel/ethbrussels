@@ -13,12 +13,7 @@ use dex::*;
 mod token;
 use token::*;
 
-// mod bandit;
-// use bandit::*;
-
-// Define the contract structure
 #[near(contract_state)]
-#[derive(PanicOnDefault)]
 pub struct Contract {
     dex_id: AccountId,
     arms: Vector<BigDeDecimal>,
@@ -28,13 +23,11 @@ pub struct Contract {
     trade_size: BigDeDecimal,
 }
 
-// Implement the contract structure
-#[near]
-impl Contract {
-    #[init]
-    #[private]
-    pub fn init() -> Self {
-        let dex_id = AccountId::from_str("ref-finance-101.testnet").unwrap();
+pub const REF_FI_ACCOUNT_ID: &str = "ref-finance-101.testnet";
+
+impl Default for Contract {
+    fn default() -> Self {
+        let dex_id = AccountId::from_str(REF_FI_ACCOUNT_ID).unwrap();
 
         let start = BigDecimal::from_str("0.0001").unwrap();
         let end = BigDecimal::from_str("0.03").unwrap();
@@ -69,7 +62,10 @@ impl Contract {
             trade_size,
         }
     }
+}
 
+#[near]
+impl Contract {
     pub fn step(&mut self) -> Promise {
         let dex = dex::ref_fi::ext(self.dex_id.clone());
         let promise = dex.swap(vec![SwapAction {
